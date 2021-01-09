@@ -1,6 +1,6 @@
 package org.reflections;
 
-import org.reflections.scanners.Scanner;
+import static org.reflections.util.Utils.index;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,8 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import static org.reflections.util.Utils.index;
+import org.reflections.scanners.Scanner;
 
 /**
  * stores metadata information in multimaps
@@ -23,7 +22,7 @@ import static org.reflections.util.Utils.index;
  */
 public class Store {
 
-    private final ConcurrentHashMap<String, Map<String, Collection<String>>> storeMap;
+    private final ConcurrentHashMap<String, Map<MemberInfo, Collection<MemberInfo>>> storeMap;
 
     protected Store(Configuration configuration) {
         storeMap = new ConcurrentHashMap<>();
@@ -33,59 +32,72 @@ public class Store {
         }
     }
 
-    /** return all indices */
+    /**
+     * return all indices
+     */
     public Set<String> keySet() {
         return storeMap.keySet();
     }
 
-    /** get the multimap object for the given {@code index}, otherwise throws a {@link org.reflections.ReflectionsException} */
-    private Map<String, Collection<String>> get(String index) {
-        Map<String, Collection<String>> mmap = storeMap.get(index);
+    /**
+     * get the multimap object for the given {@code index}, otherwise throws a {@link
+     * org.reflections.ReflectionsException}
+     */
+    private Map<MemberInfo, Collection<MemberInfo>> get(String index) {
+        Map<MemberInfo, Collection<MemberInfo>> mmap = storeMap.get(index);
         if (mmap == null) {
             throw new ReflectionsException("Scanner " + index + " was not configured");
         }
         return mmap;
     }
 
-    /** get the values stored for the given {@code index} and {@code keys} */
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
     public Set<String> get(Class<?> scannerClass, String key) {
         return get(index(scannerClass), Collections.singletonList(key));
     }
 
-    /** get the values stored for the given {@code index} and {@code keys} */
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
     public Set<String> get(String index, String key) {
         return get(index, Collections.singletonList(key));
     }
 
-    /** get the values stored for the given {@code index} and {@code keys} */
+    /**
+     * get the values stored for the given {@code index} and {@code keys}
+     */
     public Set<String> get(Class<?> scannerClass, Collection<String> keys) {
         return get(index(scannerClass), keys);
     }
 
     /** get the values stored for the given {@code index} and {@code keys} */
-    private Set<String> get(String index, Collection<String> keys) {
-        Map<String, Collection<String>> mmap = get(index);
-        Set<String> result = new LinkedHashSet<>();
-        for (String key : keys) {
-            Collection<String> values = mmap.get(key);
+    private Set<String> get(String index, Collection<MemberInfo> keys) {
+        Map<MemberInfo, Collection<MemberInfo>> mmap = get(index);
+        Set<MemberInfo> result = new LinkedHashSet<>();
+        for (MemberInfo key : keys) {
+            Collection<MemberInfo> values = mmap.get(key);
             if (values != null) {
                 result.addAll(values);
             }
         }
-        return result;
+        return result.stream()
+            .map(MemberInfo::toString)
+            .collect(Collectors.toSet());
     }
 
     /** recursively get the values stored for the given {@code index} and {@code keys}, including keys */
     public Set<String> getAllIncluding(Class<?> scannerClass, Collection<String> keys) {
         String index = index(scannerClass);
-        Map<String, Collection<String>> mmap = get(index);
-        List<String> workKeys = new ArrayList<>(keys);
+        Map<MemberInfo, Collection<MemberInfo>> mmap = get(index);
+        List<MemberInfo> workKeys = new ArrayList<>(keys);
 
-        Set<String> result = new HashSet<>();
+        Set<MemberInfo> result = new HashSet<>();
         for (int i = 0; i < workKeys.size(); i++) {
-            String key = workKeys.get(i);
+            MemberInfo key = workKeys.get(i);
             if (result.add(key)) {
-                Collection<String> values = mmap.get(key);
+                Collection<MemberInfo> values = mmap.get(key);
                 if (values != null) {
                     workKeys.addAll(values);
                 }
@@ -111,29 +123,28 @@ public class Store {
 
     public Set<String> values(String index) {
         Map<String, Collection<String>> map = storeMap.get(index);
-        return map != null ? map.values().stream().flatMap(Collection::stream).collect(Collectors.toSet()) : Collections.emptySet();
+        return map != null ? map.values().stream().flatMap(Collection::stream).collect(Collectors.toSet()) : Collections
+            .emptySet();
     }
 
     //
-    public boolean put(Class<?> scannerClass, String key, String value) {
+    public boolean put(Class<?> scannerClass, MemberInfo key, MemberInfo value) {
         return put(index(scannerClass), key, value);
     }
 
-    public boolean put(String index, String key, String value) {
+    public boolean put(String index, MemberInfo key, MemberInfo value) {
         return storeMap.computeIfAbsent(index, s -> new ConcurrentHashMap<>())
-                .computeIfAbsent(key, s -> Collections.synchronizedList(new ArrayList<>()))
-                .add(value);
+            .computeIfAbsent(key, s -> Collections.synchronizedList(new ArrayList<>()))
+            .add(value);
     }
 
     void merge(Store store) {
         if (store != null) {
             for (String indexName : store.keySet()) {
-                Map<String, Collection<String>> index = store.get(indexName);
-                if (index != null) {
-                    for (String key : index.keySet()) {
-                        for (String string : index.get(key)) {
-                            put(indexName, key, string);
-                        }
+                Map<MemberInfo, Collection<MemberInfo>> index = store.get(indexName);
+                for (MemberInfo key : index.keySet()) {
+                    for (MemberInfo string : index.get(key)) {
+                        put(indexName, key, string);
                     }
                 }
             }

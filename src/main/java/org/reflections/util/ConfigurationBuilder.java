@@ -1,17 +1,5 @@
 package org.reflections.util;
 
-import org.reflections.Configuration;
-import org.reflections.Reflections;
-import org.reflections.ReflectionsException;
-import org.reflections.adapters.JavaReflectionAdapter;
-import org.reflections.adapters.JavassistAdapter;
-import org.reflections.adapters.MetadataAdapter;
-import org.reflections.scanners.Scanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.serializers.Serializer;
-import org.reflections.serializers.XmlSerializer;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +13,15 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import org.reflections.Configuration;
+import org.reflections.Reflections;
+import org.reflections.ReflectionsException;
+import org.reflections.adapters.JavaReflectionAdapter;
+import org.reflections.adapters.JavassistAdapter;
+import org.reflections.adapters.MetadataAdapter;
+import org.reflections.scanners.Scanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
 
 /**
  * a fluent builder for {@link org.reflections.Configuration}, to be used for constructing a {@link org.reflections.Reflections} instance
@@ -46,7 +43,6 @@ public class ConfigurationBuilder implements Configuration {
     private Set<URL> urls;
     /*lazy*/ protected MetadataAdapter metadataAdapter;
     private Predicate<String> inputsFilter;
-    /*lazy*/ private Serializer serializer;
     private ExecutorService executorService;
     private ClassLoader[] classLoaders;
     private boolean expandSuperTypes = true;
@@ -260,16 +256,6 @@ public class ConfigurationBuilder implements Configuration {
             }
         };
         setExecutorService(Executors.newFixedThreadPool(availableProcessors, threadFactory));
-        return this;
-    }
-
-    public Serializer getSerializer() {
-        return serializer != null ? serializer : (serializer = new XmlSerializer()); //lazily defaults to XmlSerializer
-    }
-
-    /** sets the serializer used when issuing {@link org.reflections.Reflections#save} */
-    public ConfigurationBuilder setSerializer(Serializer serializer) {
-        this.serializer = serializer;
         return this;
     }
 

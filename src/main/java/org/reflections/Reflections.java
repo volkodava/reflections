@@ -9,8 +9,6 @@ import org.reflections.scanners.ResourcesScanner;
 import org.reflections.scanners.Scanner;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.serializers.Serializer;
-import org.reflections.serializers.XmlSerializer;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
@@ -289,85 +287,6 @@ public class Reflections {
         }
     }
 
-    /** collect saved Reflection xml resources and merge it into a Reflections instance
-     * <p>by default, resources are collected from all urls that contains the package META-INF/reflections
-     * and includes files matching the pattern .*-reflections.xml
-     * */
-    public static Reflections collect() {
-        return collect("META-INF/reflections/", new FilterBuilder().include(".*-reflections.xml"));
-    }
-
-    /**
-     * collect saved Reflections resources from all urls that contains the given packagePrefix and matches the given resourceNameFilter
-     * and de-serializes them using the default serializer {@link org.reflections.serializers.XmlSerializer} or using the optionally supplied optionalSerializer
-     * <p>
-     * it is preferred to use a designated resource prefix (for example META-INF/reflections but not just META-INF),
-     * so that relevant urls could be found much faster
-     * @param optionalSerializer - optionally supply one serializer instance. if not specified or null, {@link org.reflections.serializers.XmlSerializer} will be used
-     */
-    public static Reflections collect(final String packagePrefix, final Predicate<String> resourceNameFilter, Serializer... optionalSerializer) {
-        Serializer serializer = optionalSerializer != null && optionalSerializer.length == 1 ? optionalSerializer[0] : new XmlSerializer();
-
-        Collection<URL> urls = ClasspathHelper.forPackage(packagePrefix);
-        if (urls.isEmpty()) return null;
-        long start = System.currentTimeMillis();
-        final Reflections reflections = new Reflections();
-        Iterable<Vfs.File> files = Vfs.findFiles(urls, packagePrefix, resourceNameFilter);
-        for (final Vfs.File file : files) {
-            InputStream inputStream = null;
-            try {
-                inputStream = file.openInputStream();
-                reflections.merge(serializer.read(inputStream));
-            } catch (IOException e) {
-                throw new ReflectionsException("could not merge " + file, e);
-            } finally {
-                close(inputStream);
-            }
-        }
-
-        if (log != null) {
-            log.info(format("Reflections took %d ms to collect %d url, producing %s",
-                    System.currentTimeMillis() - start, urls.size(), producingDescription(reflections.store)));
-        }
-        return reflections;
-    }
-
-    /** merges saved Reflections resources from the given input stream, using the serializer configured in this instance's Configuration
-     * <br> useful if you know the serialized resource location and prefer not to look it up the classpath
-     * */
-    public Reflections collect(final InputStream inputStream) {
-        try {
-            merge(configuration.getSerializer().read(inputStream));
-        } catch (Exception ex) {
-            throw new ReflectionsException("could not merge input stream", ex);
-        }
-
-        return this;
-    }
-
-    /** merges saved Reflections resources from the given file, using the serializer configured in this instance's Configuration
-     * <p> useful if you know the serialized resource location and prefer not to look it up the classpath
-     * */
-    public Reflections collect(final File file) {
-        FileInputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(file);
-            return collect(inputStream);
-        } catch (FileNotFoundException e) {
-            throw new ReflectionsException("could not obtain input stream from file " + file, e);
-        } finally {
-            Utils.close(inputStream);
-        }
-    }
-
-    /**
-     * merges a Reflections instance metadata into this instance
-     */
-    public Reflections merge(final Reflections reflections) {
-        store.merge(reflections.store);
-        return this;
-    }
-
     /**
      * expand super types after scanning, for super types that were not scanned.
      * this is helpful in finding the transitive closure without scanning all 3rd party dependencies.
@@ -639,25 +558,6 @@ public class Reflections {
     /** returns the {@link org.reflections.Configuration} object of this instance */
     public Configuration getConfiguration() {
         return configuration;
-    }
-
-    /**
-     * serialize to a given directory and filename
-     * <p>* it is preferred to specify a designated directory (for example META-INF/reflections),
-     * so that it could be found later much faster using the load method
-     * <p>see the documentation for the save method on the configured {@link org.reflections.serializers.Serializer}
-     */
-    public File save(final String filename) {
-        return save(filename, configuration.getSerializer());
-    }
-
-    /**
-     * serialize to a given directory and filename using given serializer
-     * <p>* it is preferred to specify a designated directory (for example META-INF/reflections),
-     * so that it could be found later much faster using the load method
-     */
-    public File save(final String filename, final Serializer serializer) {
-        return serializer.save(this, filename);
     }
 
     private ClassLoader[] loaders() { return configuration.getClassLoaders(); }

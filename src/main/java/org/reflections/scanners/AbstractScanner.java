@@ -1,6 +1,7 @@
 package org.reflections.scanners;
 
 import org.reflections.Configuration;
+import org.reflections.MemberInfo;
 import org.reflections.ReflectionsException;
 import org.reflections.Store;
 import org.reflections.adapters.MetadataAdapter;
@@ -36,7 +37,7 @@ public abstract class AbstractScanner implements Scanner {
 
     public abstract void scan(Object cls, Store store);
 
-    protected void put(Store store, String key, String value) {
+    protected void put(Store store, MemberInfo key, MemberInfo value) {
         store.put(Utils.index(getClass()), key, value);
     }
 

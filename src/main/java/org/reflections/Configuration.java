@@ -1,13 +1,11 @@
 package org.reflections;
 
-import org.reflections.adapters.MetadataAdapter;
-import org.reflections.scanners.Scanner;
-import org.reflections.serializers.Serializer;
-
 import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
+import org.reflections.adapters.MetadataAdapter;
+import org.reflections.scanners.Scanner;
 
 /**
  * Configuration is used to create a configured instance of {@link Reflections}
@@ -29,9 +27,6 @@ public interface Configuration {
 
     /** executor service used to scan files. if null, scanning is done in a simple for loop */
     ExecutorService getExecutorService();
-
-    /** the default serializer to use when saving Reflection */
-    Serializer getSerializer();
 
     /** get class loaders, might be used for resolving methods/fields */
     ClassLoader[] getClassLoaders();
