@@ -1,22 +1,20 @@
 package org.reflections;
 
-import org.reflections.scanners.FieldAnnotationsScanner;
-import org.reflections.scanners.MemberUsageScanner;
-import org.reflections.scanners.MethodAnnotationsScanner;
-import org.reflections.scanners.MethodParameterNamesScanner;
-import org.reflections.scanners.MethodParameterScanner;
-import org.reflections.scanners.ResourcesScanner;
-import org.reflections.scanners.Scanner;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.serializers.Serializer;
-import org.reflections.serializers.XmlSerializer;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
-import org.reflections.util.Utils;
-import org.reflections.vfs.Vfs;
-import org.slf4j.Logger;
+import static java.lang.String.format;
+import static org.reflections.ReflectionUtils.forName;
+import static org.reflections.ReflectionUtils.forNames;
+import static org.reflections.ReflectionUtils.withAnnotation;
+import static org.reflections.ReflectionUtils.withAnyParameterAnnotation;
+import static org.reflections.util.Utils.close;
+import static org.reflections.util.Utils.filter;
+import static org.reflections.util.Utils.findLogger;
+import static org.reflections.util.Utils.getConstructorsFromDescriptors;
+import static org.reflections.util.Utils.getFieldFromString;
+import static org.reflections.util.Utils.getMembersFromDescriptors;
+import static org.reflections.util.Utils.getMethodsFromDescriptors;
+import static org.reflections.util.Utils.index;
+import static org.reflections.util.Utils.name;
+import static org.reflections.util.Utils.names;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -44,10 +43,23 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static java.lang.String.format;
-import static org.reflections.ReflectionUtils.*;
-import static org.reflections.util.Utils.*;
+import org.reflections.scanners.FieldAnnotationsScanner;
+import org.reflections.scanners.MemberUsageScanner;
+import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.MethodParameterNamesScanner;
+import org.reflections.scanners.MethodParameterScanner;
+import org.reflections.scanners.ResourcesScanner;
+import org.reflections.scanners.Scanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.serializers.Serializer;
+import org.reflections.serializers.XmlSerializer;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
+import org.reflections.util.Utils;
+import org.reflections.vfs.Vfs;
+import org.slf4j.Logger;
 
 /**
  * Reflections one-stop-shop object
@@ -118,6 +130,7 @@ import static org.reflections.util.Utils.*;
 public class Reflections {
     public static Logger log = findLogger(Reflections.class);
 
+    private final LambdaUsageHandler lambdaUsageHandler = new LambdaUsageHandler();
     protected final transient Configuration configuration;
     protected Store store;
 
@@ -599,21 +612,37 @@ public class Reflections {
      * <p>depends on MemberUsageScanner configured
      */
     public Set<Member> getFieldUsage(Field field) {
-        return getMembersFromDescriptors(store.get(MemberUsageScanner.class, name(field)), loaders());
+        Set<String> values = findUsages(MemberUsageScanner.class, name(field));
+        return getMembersFromDescriptors(values, loaders());
     }
 
     /** get all given {@code method} usages in methods and constructors
      * <p>depends on MemberUsageScanner configured
      */
     public Set<Member> getMethodUsage(Method method) {
-        return getMembersFromDescriptors(store.get(MemberUsageScanner.class, name(method)), loaders());
+        Set<String> values = findUsages(MemberUsageScanner.class, name(method));
+        return getMembersFromDescriptors(values, loaders());
     }
 
     /** get all given {@code constructors} usages in methods and constructors
      * <p>depends on MemberUsageScanner configured
      */
     public Set<Member> getConstructorUsage(Constructor constructor) {
-        return getMembersFromDescriptors(store.get(MemberUsageScanner.class, name(constructor)), loaders());
+        Set<String> values = findUsages(MemberUsageScanner.class, name(constructor));
+        return getMembersFromDescriptors(values, loaders());
+    }
+
+    private Set<String> findUsages(Class<?> scannerClass, String key) {
+        Set<String> result = new LinkedHashSet<>();
+        Set<String> values = store.get(scannerClass, key);
+        for (String value : values) {
+            if (lambdaUsageHandler.isLambda(value)) {
+                result.add(lambdaUsageHandler.findRefSubstitution(value, scannerClass, store));
+            } else {
+                result.add(value);
+            }
+        }
+        return result;
     }
 
     /** get all types scanned. this is effectively similar to getting all subtypes of Object.
