@@ -63,7 +63,9 @@ import org.slf4j.Logger;
 
 /**
  * Reflections one-stop-shop object
- * <p>Reflections scans your classpath, indexes the metadata, allows you to query it on runtime and may save and collect that information for many modules within your project.
+ * <p>Reflections scans your classpath, indexes the metadata, allows you to query it on runtime and may save and
+ * collect
+ * that information for many modules within your project.
  * <p>Using Reflections you can query your metadata such as:
  * <ul>
  *     <li>get all subtypes of some type
@@ -128,6 +130,7 @@ import org.slf4j.Logger;
  * <p><p><p>For Javadoc, source code, and more information about Reflections Library, see http://github.com/ronmamo/reflections/
  */
 public class Reflections {
+
     public static Logger log = findLogger(Reflections.class);
 
     private final LambdaUsageHandler lambdaUsageHandler = new LambdaUsageHandler();
@@ -161,9 +164,13 @@ public class Reflections {
      * <p>this actually create a {@link org.reflections.Configuration} with:
      * <br> - urls that contain resources with name {@code prefix}
      * <br> - filterInputsBy where name starts with the given {@code prefix}
-     * <br> - scanners set to the given {@code scanners}, otherwise defaults to {@link org.reflections.scanners.TypeAnnotationsScanner} and {@link org.reflections.scanners.SubTypesScanner}.
-     * @param prefix package prefix, to be used with {@link org.reflections.util.ClasspathHelper#forPackage(String, ClassLoader...)} )}
-     * @param scanners optionally supply scanners, otherwise defaults to {@link org.reflections.scanners.TypeAnnotationsScanner} and {@link org.reflections.scanners.SubTypesScanner}
+     * <br> - scanners set to the given {@code scanners}, otherwise defaults to {@link
+     * org.reflections.scanners.TypeAnnotationsScanner} and {@link org.reflections.scanners.SubTypesScanner}.
+     *
+     * @param prefix   package prefix, to be used with {@link org.reflections.util.ClasspathHelper#forPackage(String,
+     *                 ClassLoader...)} )}
+     * @param scanners optionally supply scanners, otherwise defaults to {@link org.reflections.scanners.TypeAnnotationsScanner}
+     *                 and {@link org.reflections.scanners.SubTypesScanner}
      */
     public Reflections(final String prefix, final Scanner... scanners) {
         this((Object) prefix, scanners);
@@ -179,7 +186,7 @@ public class Reflections {
      *     <li>{@link java.net.URL} - would add the given url for scanning</li>
      *     <li>{@link Object[]} - would use each element as above</li>
      * </ul>
-     *
+     * <p>
      * use any parameter type in any order. this constructor uses instanceof on each param and instantiate a {@link org.reflections.util.ConfigurationBuilder} appropriately.
      * if you prefer the usual statically typed constructor, don't use this, although it can be very useful.
      *
@@ -256,9 +263,9 @@ public class Reflections {
 
         if (log != null) {
             log.info(format("Reflections took %d ms to scan %d urls, producing %s %s",
-                    System.currentTimeMillis() - time, scannedUrls, producingDescription(store),
-                    executorService instanceof ThreadPoolExecutor ?
-                            format("[using %d cores]", ((ThreadPoolExecutor) executorService).getMaximumPoolSize()) : ""));
+                System.currentTimeMillis() - time, scannedUrls, producingDescription(store),
+                executorService instanceof ThreadPoolExecutor ?
+                    format("[using %d cores]", ((ThreadPoolExecutor) executorService).getMaximumPoolSize()) : ""));
         }
     }
 
@@ -291,7 +298,8 @@ public class Reflections {
                         } catch (Exception e) {
                             if (log != null && log.isTraceEnabled()) {
                                 // SLF4J will filter out Throwables from the format string arguments.
-                                log.trace("could not scan file {} in url {} with scanner {}", file.getRelativePath(), url.toExternalForm(), scanner.getClass().getSimpleName(), e);
+                                log.trace("could not scan file {} in url {} with scanner {}", file.getRelativePath(),
+                                    url.toExternalForm(), scanner.getClass().getSimpleName(), e);
                             }
                         }
                     }
@@ -302,27 +310,35 @@ public class Reflections {
         }
     }
 
-    /** collect saved Reflection xml resources and merge it into a Reflections instance
+    /**
+     * collect saved Reflection xml resources and merge it into a Reflections instance
      * <p>by default, resources are collected from all urls that contains the package META-INF/reflections
      * and includes files matching the pattern .*-reflections.xml
-     * */
+     */
     public static Reflections collect() {
         return collect("META-INF/reflections/", new FilterBuilder().include(".*-reflections.xml"));
     }
 
     /**
-     * collect saved Reflections resources from all urls that contains the given packagePrefix and matches the given resourceNameFilter
-     * and de-serializes them using the default serializer {@link org.reflections.serializers.XmlSerializer} or using the optionally supplied optionalSerializer
+     * collect saved Reflections resources from all urls that contains the given packagePrefix and matches the given
+     * resourceNameFilter and de-serializes them using the default serializer {@link
+     * org.reflections.serializers.XmlSerializer} or using the optionally supplied optionalSerializer
      * <p>
-     * it is preferred to use a designated resource prefix (for example META-INF/reflections but not just META-INF),
-     * so that relevant urls could be found much faster
-     * @param optionalSerializer - optionally supply one serializer instance. if not specified or null, {@link org.reflections.serializers.XmlSerializer} will be used
+     * it is preferred to use a designated resource prefix (for example META-INF/reflections but not just META-INF), so
+     * that relevant urls could be found much faster
+     *
+     * @param optionalSerializer - optionally supply one serializer instance. if not specified or null, {@link
+     *                           org.reflections.serializers.XmlSerializer} will be used
      */
-    public static Reflections collect(final String packagePrefix, final Predicate<String> resourceNameFilter, Serializer... optionalSerializer) {
-        Serializer serializer = optionalSerializer != null && optionalSerializer.length == 1 ? optionalSerializer[0] : new XmlSerializer();
+    public static Reflections collect(final String packagePrefix, final Predicate<String> resourceNameFilter,
+        Serializer... optionalSerializer) {
+        Serializer serializer =
+            optionalSerializer != null && optionalSerializer.length == 1 ? optionalSerializer[0] : new XmlSerializer();
 
         Collection<URL> urls = ClasspathHelper.forPackage(packagePrefix);
-        if (urls.isEmpty()) return null;
+        if (urls.isEmpty()) {
+            return null;
+        }
         long start = System.currentTimeMillis();
         final Reflections reflections = new Reflections();
         Iterable<Vfs.File> files = Vfs.findFiles(urls, packagePrefix, resourceNameFilter);
@@ -340,14 +356,16 @@ public class Reflections {
 
         if (log != null) {
             log.info(format("Reflections took %d ms to collect %d url, producing %s",
-                    System.currentTimeMillis() - start, urls.size(), producingDescription(reflections.store)));
+                System.currentTimeMillis() - start, urls.size(), producingDescription(reflections.store)));
         }
         return reflections;
     }
 
-    /** merges saved Reflections resources from the given input stream, using the serializer configured in this instance's Configuration
+    /**
+     * merges saved Reflections resources from the given input stream, using the serializer configured in this
+     * instance's Configuration
      * <br> useful if you know the serialized resource location and prefer not to look it up the classpath
-     * */
+     */
     public Reflections collect(final InputStream inputStream) {
         try {
             merge(configuration.getSerializer().read(inputStream));
@@ -358,9 +376,11 @@ public class Reflections {
         return this;
     }
 
-    /** merges saved Reflections resources from the given file, using the serializer configured in this instance's Configuration
+    /**
+     * merges saved Reflections resources from the given file, using the serializer configured in this instance's
+     * Configuration
      * <p> useful if you know the serialized resource location and prefer not to look it up the classpath
-     * */
+     */
     public Reflections collect(final File file) {
         FileInputStream inputStream = null;
         try {
@@ -382,9 +402,9 @@ public class Reflections {
     }
 
     /**
-     * expand super types after scanning, for super types that were not scanned.
-     * this is helpful in finding the transitive closure without scanning all 3rd party dependencies.
-     * it uses {@link ReflectionUtils#getSuperTypes(Class)}.
+     * expand super types after scanning, for super types that were not scanned. this is helpful in finding the
+     * transitive closure without scanning all 3rd party dependencies. it uses {@link
+     * ReflectionUtils#getSuperTypes(Class)}.
      * <p>
      * for example, for classes A,B,C where A supertype of B, B supertype of C:
      * <ul>
@@ -416,9 +436,9 @@ public class Reflections {
     }
 
     //query
+
     /**
-     * gets all sub types in hierarchy of a given type
-     * <p/>depends on SubTypesScanner configured
+     * gets all sub types in hierarchy of a given type <p/>depends on SubTypesScanner configured
      */
     public <T> Set<Class<? extends T>> getSubTypesOf(final Class<T> type) {
         return forNames(store.getAll(SubTypesScanner.class, type.getName()), loaders());
@@ -428,9 +448,10 @@ public class Reflections {
      * get types annotated with a given annotation, both classes and annotations
      * <p>{@link java.lang.annotation.Inherited} is not honored by default.
      * <p>when honoring @Inherited, meta-annotation should only effect annotated super classes and its sub types
-     * <p><i>Note that this (@Inherited) meta-annotation type has no effect if the annotated type is used for anything other then a class.
-     * Also, this meta-annotation causes annotations to be inherited only from superclasses; annotations on implemented interfaces have no effect.</i>
-     * <p/>depends on TypeAnnotationsScanner and SubTypesScanner configured
+     * <p><i>Note that this (@Inherited) meta-annotation type has no effect if the annotated type is used for anything
+     * other then a class. Also, this meta-annotation causes annotations to be inherited only from superclasses;
+     * annotations on implemented interfaces have no effect.</i> <p/>depends on TypeAnnotationsScanner and
+     * SubTypesScanner configured
      */
     public Set<Class<?>> getTypesAnnotatedWith(final Class<? extends Annotation> annotation) {
         return getTypesAnnotatedWith(annotation, false);
@@ -440,10 +461,12 @@ public class Reflections {
      * get types annotated with a given annotation, both classes and annotations
      * <p>{@link java.lang.annotation.Inherited} is honored according to given honorInherited.
      * <p>when honoring @Inherited, meta-annotation should only effect annotated super classes and it's sub types
-     * <p>when not honoring @Inherited, meta annotation effects all subtypes, including annotations interfaces and classes
-     * <p><i>Note that this (@Inherited) meta-annotation type has no effect if the annotated type is used for anything other then a class.
-     * Also, this meta-annotation causes annotations to be inherited only from superclasses; annotations on implemented interfaces have no effect.</i>
-     * <p/>depends on TypeAnnotationsScanner and SubTypesScanner configured
+     * <p>when not honoring @Inherited, meta annotation effects all subtypes, including annotations interfaces and
+     * classes
+     * <p><i>Note that this (@Inherited) meta-annotation type has no effect if the annotated type is used for anything
+     * other then a class. Also, this meta-annotation causes annotations to be inherited only from superclasses;
+     * annotations on implemented interfaces have no effect.</i> <p/>depends on TypeAnnotationsScanner and
+     * SubTypesScanner configured
      */
     public Set<Class<?>> getTypesAnnotatedWith(final Class<? extends Annotation> annotation, boolean honorInherited) {
         Set<String> annotated = store.get(TypeAnnotationsScanner.class, annotation.getName());
@@ -452,7 +475,8 @@ public class Reflections {
     }
 
     /**
-     * get types annotated with a given annotation, both classes and annotations, including annotation member values matching
+     * get types annotated with a given annotation, both classes and annotations, including annotation member values
+     * matching
      * <p>{@link java.lang.annotation.Inherited} is not honored by default
      * <p/>depends on TypeAnnotationsScanner configured
      */
@@ -461,19 +485,23 @@ public class Reflections {
     }
 
     /**
-     * get types annotated with a given annotation, both classes and annotations, including annotation member values matching
+     * get types annotated with a given annotation, both classes and annotations, including annotation member values
+     * matching
      * <p>{@link java.lang.annotation.Inherited} is honored according to given honorInherited
      * <p/>depends on TypeAnnotationsScanner configured
      */
     public Set<Class<?>> getTypesAnnotatedWith(final Annotation annotation, boolean honorInherited) {
         Set<String> annotated = store.get(TypeAnnotationsScanner.class, annotation.annotationType().getName());
         Set<Class<?>> allAnnotated = filter(forNames(annotated, loaders()), withAnnotation(annotation));
-        Set<Class<?>> classes = forNames(filter(getAllAnnotated(names(allAnnotated), annotation.annotationType(), honorInherited), s -> !annotated.contains(s)), loaders());
+        Set<Class<?>> classes = forNames(
+            filter(getAllAnnotated(names(allAnnotated), annotation.annotationType(), honorInherited),
+                s -> !annotated.contains(s)), loaders());
         allAnnotated.addAll(classes);
         return allAnnotated;
     }
 
-    protected Collection<String> getAllAnnotated(Collection<String> annotated, Class<? extends Annotation> annotation, boolean honorInherited) {
+    protected Collection<String> getAllAnnotated(Collection<String> annotated, Class<? extends Annotation> annotation,
+        boolean honorInherited) {
         if (honorInherited) {
             if (annotation.isAnnotationPresent(Inherited.class)) {
                 Set<String> subTypes = store.get(SubTypesScanner.class, filter(annotated, input -> {
@@ -491,100 +519,117 @@ public class Reflections {
     }
 
     /**
-     * get all methods annotated with a given annotation
-     * <p/>depends on MethodAnnotationsScanner configured
+     * get all methods annotated with a given annotation <p/>depends on MethodAnnotationsScanner configured
      */
     public Set<Method> getMethodsAnnotatedWith(final Class<? extends Annotation> annotation) {
         return getMethodsFromDescriptors(store.get(MethodAnnotationsScanner.class, annotation.getName()), loaders());
     }
 
     /**
-     * get all methods annotated with a given annotation, including annotation member values matching
-     * <p/>depends on MethodAnnotationsScanner configured
+     * get all methods annotated with a given annotation, including annotation member values matching <p/>depends on
+     * MethodAnnotationsScanner configured
      */
     public Set<Method> getMethodsAnnotatedWith(final Annotation annotation) {
         return filter(getMethodsAnnotatedWith(annotation.annotationType()), withAnnotation(annotation));
     }
 
-    /** get methods with parameter types matching given {@code types}*/
+    /**
+     * get methods with parameter types matching given {@code types}
+     */
     public Set<Method> getMethodsMatchParams(Class<?>... types) {
         return getMethodsFromDescriptors(store.get(MethodParameterScanner.class, names(types).toString()), loaders());
     }
 
-    /** get methods with return type match given type */
+    /**
+     * get methods with return type match given type
+     */
     public Set<Method> getMethodsReturn(Class returnType) {
         return getMethodsFromDescriptors(store.get(MethodParameterScanner.class, names(returnType)), loaders());
     }
 
-    /** get methods with any parameter annotated with given annotation */
+    /**
+     * get methods with any parameter annotated with given annotation
+     */
     public Set<Method> getMethodsWithAnyParamAnnotated(Class<? extends Annotation> annotation) {
         return getMethodsFromDescriptors(store.get(MethodParameterScanner.class, annotation.getName()), loaders());
 
     }
 
-    /** get methods with any parameter annotated with given annotation, including annotation member values matching */
+    /**
+     * get methods with any parameter annotated with given annotation, including annotation member values matching
+     */
     public Set<Method> getMethodsWithAnyParamAnnotated(Annotation annotation) {
-        return filter(getMethodsWithAnyParamAnnotated(annotation.annotationType()), withAnyParameterAnnotation(annotation));
+        return filter(getMethodsWithAnyParamAnnotated(annotation.annotationType()),
+            withAnyParameterAnnotation(annotation));
     }
 
     /**
-     * get all constructors annotated with a given annotation
-     * <p/>depends on MethodAnnotationsScanner configured
+     * get all constructors annotated with a given annotation <p/>depends on MethodAnnotationsScanner configured
      */
     public Set<Constructor> getConstructorsAnnotatedWith(final Class<? extends Annotation> annotation) {
-        return getConstructorsFromDescriptors(store.get(MethodAnnotationsScanner.class, annotation.getName()), loaders());
+        return getConstructorsFromDescriptors(store.get(MethodAnnotationsScanner.class, annotation.getName()),
+            loaders());
     }
 
     /**
-     * get all constructors annotated with a given annotation, including annotation member values matching
-     * <p/>depends on MethodAnnotationsScanner configured
+     * get all constructors annotated with a given annotation, including annotation member values matching <p/>depends
+     * on MethodAnnotationsScanner configured
      */
     public Set<Constructor> getConstructorsAnnotatedWith(final Annotation annotation) {
         return filter(getConstructorsAnnotatedWith(annotation.annotationType()), withAnnotation(annotation));
     }
 
-    /** get constructors with parameter types matching given {@code types}*/
+    /**
+     * get constructors with parameter types matching given {@code types}
+     */
     public Set<Constructor> getConstructorsMatchParams(Class<?>... types) {
-        return getConstructorsFromDescriptors(store.get(MethodParameterScanner.class, names(types).toString()), loaders());
+        return getConstructorsFromDescriptors(store.get(MethodParameterScanner.class, names(types).toString()),
+            loaders());
     }
 
-    /** get constructors with any parameter annotated with given annotation */
+    /**
+     * get constructors with any parameter annotated with given annotation
+     */
     public Set<Constructor> getConstructorsWithAnyParamAnnotated(Class<? extends Annotation> annotation) {
         return getConstructorsFromDescriptors(store.get(MethodParameterScanner.class, annotation.getName()), loaders());
     }
 
-    /** get constructors with any parameter annotated with given annotation, including annotation member values matching */
+    /**
+     * get constructors with any parameter annotated with given annotation, including annotation member values matching
+     */
     public Set<Constructor> getConstructorsWithAnyParamAnnotated(Annotation annotation) {
-        return filter(getConstructorsWithAnyParamAnnotated(annotation.annotationType()), withAnyParameterAnnotation(annotation));
+        return filter(getConstructorsWithAnyParamAnnotated(annotation.annotationType()),
+            withAnyParameterAnnotation(annotation));
     }
 
     /**
-     * get all fields annotated with a given annotation
-     * <p/>depends on FieldAnnotationsScanner configured
+     * get all fields annotated with a given annotation <p/>depends on FieldAnnotationsScanner configured
      */
     public Set<Field> getFieldsAnnotatedWith(final Class<? extends Annotation> annotation) {
         return store.get(FieldAnnotationsScanner.class, annotation.getName()).stream()
-                .map(annotated -> getFieldFromString(annotated, loaders()))
-                .collect(Collectors.toSet());
+            .map(annotated -> getFieldFromString(annotated, loaders()))
+            .collect(Collectors.toSet());
     }
 
     /**
-     * get all methods annotated with a given annotation, including annotation member values matching
-     * <p/>depends on FieldAnnotationsScanner configured
+     * get all methods annotated with a given annotation, including annotation member values matching <p/>depends on
+     * FieldAnnotationsScanner configured
      */
     public Set<Field> getFieldsAnnotatedWith(final Annotation annotation) {
         return filter(getFieldsAnnotatedWith(annotation.annotationType()), withAnnotation(annotation));
     }
 
-    /** get resources relative paths where simple name (key) matches given namePredicate
+    /**
+     * get resources relative paths where simple name (key) matches given namePredicate
      * <p>depends on ResourcesScanner configured
-     * */
+     */
     public Set<String> getResources(final Predicate<String> namePredicate) {
         Set<String> resources = filter(store.keys(index(ResourcesScanner.class)), namePredicate);
         return store.get(ResourcesScanner.class, resources);
     }
 
-    /** get resources relative paths where simple name (key) matches given regular expression
+    /**
+     * get resources relative paths where simple name (key) matches given regular expression
      * <p>depends on ResourcesScanner configured
      * <pre>Set<String> xmls = reflections.getResources(".*\\.xml");</pre>
      */
@@ -592,7 +637,8 @@ public class Reflections {
         return getResources(input -> pattern.matcher(input).matches());
     }
 
-    /** get parameter names of given {@code method}
+    /**
+     * get parameter names of given {@code method}
      * <p>depends on MethodParameterNamesScanner configured
      */
     public List<String> getMethodParamNames(Method method) {
@@ -600,7 +646,8 @@ public class Reflections {
         return names.size() == 1 ? Arrays.asList(names.iterator().next().split(", ")) : Collections.emptyList();
     }
 
-    /** get parameter names of given {@code constructor}
+    /**
+     * get parameter names of given {@code constructor}
      * <p>depends on MethodParameterNamesScanner configured
      */
     public List<String> getConstructorParamNames(Constructor constructor) {
@@ -608,7 +655,8 @@ public class Reflections {
         return names.size() == 1 ? Arrays.asList(names.iterator().next().split(", ")) : Collections.emptyList();
     }
 
-    /** get all given {@code field} usages in methods and constructors
+    /**
+     * get all given {@code field} usages in methods and constructors
      * <p>depends on MemberUsageScanner configured
      */
     public Set<Member> getFieldUsage(Field field) {
@@ -616,7 +664,8 @@ public class Reflections {
         return getMembersFromDescriptors(values, loaders());
     }
 
-    /** get all given {@code method} usages in methods and constructors
+    /**
+     * get all given {@code method} usages in methods and constructors
      * <p>depends on MemberUsageScanner configured
      */
     public Set<Member> getMethodUsage(Method method) {
@@ -624,7 +673,8 @@ public class Reflections {
         return getMembersFromDescriptors(values, loaders());
     }
 
-    /** get all given {@code constructors} usages in methods and constructors
+    /**
+     * get all given {@code constructors} usages in methods and constructors
      * <p>depends on MemberUsageScanner configured
      */
     public Set<Member> getConstructorUsage(Constructor constructor) {
@@ -637,7 +687,7 @@ public class Reflections {
         Set<String> values = store.get(scannerClass, key);
         for (String value : values) {
             if (lambdaUsageHandler.isLambda(value)) {
-                result.add(lambdaUsageHandler.findRefSubstitution(value, scannerClass, store));
+                result.add(lambdaUsageHandler.findRefSubstitution(value, scannerClass, store, loaders()));
             } else {
                 result.add(value);
             }
@@ -645,27 +695,34 @@ public class Reflections {
         return result;
     }
 
-    /** get all types scanned. this is effectively similar to getting all subtypes of Object.
-     * <p>depends on SubTypesScanner configured with {@code SubTypesScanner(false)}, otherwise {@code ReflectionsException} is thrown
+    /**
+     * get all types scanned. this is effectively similar to getting all subtypes of Object.
+     * <p>depends on SubTypesScanner configured with {@code SubTypesScanner(false)}, otherwise {@code
+     * ReflectionsException} is thrown
      * <p><i>note using this might be a bad practice. it is better to get types matching some criteria,
      * such as {@link #getSubTypesOf(Class)} or {@link #getTypesAnnotatedWith(Class)}</i>
+     *
      * @return Set of String, and not of Class, in order to avoid definition of all types in PermGen
      */
     public Set<String> getAllTypes() {
         Set<String> allTypes = new HashSet<>(store.getAll(SubTypesScanner.class, Object.class.getName()));
         if (allTypes.isEmpty()) {
             throw new ReflectionsException("Couldn't find subtypes of Object. " +
-                    "Make sure SubTypesScanner initialized to include Object class - new SubTypesScanner(false)");
+                "Make sure SubTypesScanner initialized to include Object class - new SubTypesScanner(false)");
         }
         return allTypes;
     }
 
-    /** returns the {@link org.reflections.Store} used for storing and querying the metadata */
+    /**
+     * returns the {@link org.reflections.Store} used for storing and querying the metadata
+     */
     public Store getStore() {
         return store;
     }
 
-    /** returns the {@link org.reflections.Configuration} object of this instance */
+    /**
+     * returns the {@link org.reflections.Configuration} object of this instance
+     */
     public Configuration getConfiguration() {
         return configuration;
     }
@@ -689,5 +746,7 @@ public class Reflections {
         return serializer.save(this, filename);
     }
 
-    private ClassLoader[] loaders() { return configuration.getClassLoaders(); }
+    private ClassLoader[] loaders() {
+        return configuration.getClassLoaders();
+    }
 }
