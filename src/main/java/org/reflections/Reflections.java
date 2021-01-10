@@ -64,8 +64,7 @@ import org.slf4j.Logger;
 /**
  * Reflections one-stop-shop object
  * <p>Reflections scans your classpath, indexes the metadata, allows you to query it on runtime and may save and
- * collect
- * that information for many modules within your project.
+ * collect that information for many modules within your project.
  * <p>Using Reflections you can query your metadata such as:
  * <ul>
  *     <li>get all subtypes of some type
@@ -277,6 +276,28 @@ public class Reflections {
             values += store.values(index).size();
         }
         return String.format("%d keys and %d values", keys, values);
+    }
+
+    public Set<String> listAllClasses(URL url) {
+        Set<String> classNames = new LinkedHashSet<>();
+        Vfs.Dir dir = Vfs.fromURL(url);
+
+        try {
+            for (final Vfs.File file : dir.getFiles()) {
+                // scan if inputs filter accepts file relative path or fqn
+                Predicate<String> inputsFilter = configuration.getInputsFilter();
+                String path = file.getRelativePath();
+                String fqn = path.replace('/', '.')
+                    .replaceAll("\\.class$", "");
+                if (inputsFilter == null || inputsFilter.test(path) || inputsFilter.test(fqn)) {
+                    classNames.add(fqn);
+                }
+            }
+        } finally {
+            dir.close();
+        }
+
+        return classNames;
     }
 
     protected void scan(URL url) {
